@@ -1,9 +1,12 @@
-const CACHE = 'habits-v1';
-const CORE = ['/', '/index.html', '/manifest.webmanifest', '/icon.svg', '/icon-maskable.svg'];
+const CACHE = 'habits-v2';
+const BASE = self.registration.scope; // e.g. https://25thomasc.github.io/Habits/
+const CORE = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-maskable.svg'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open(CACHE).then((c) => c.addAll(CORE))
+    caches.open(CACHE).then((c) =>
+      Promise.all(CORE.map((u) => c.add(new URL(u, BASE).href).catch(() => {})))
+    )
   );
   self.skipWaiting();
 });
@@ -23,7 +26,7 @@ self.addEventListener('fetch', (e) => {
 
   if (req.mode === 'navigate') {
     e.respondWith(
-      caches.match('/index.html').then((r) => r || fetch(req))
+      fetch(req).catch(() => caches.match(new URL('./index.html', BASE).href))
     );
     return;
   }
